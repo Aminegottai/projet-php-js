@@ -1,0 +1,111 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+body {
+    background: #ebedef;
+}
+nav {
+    position: sticky;
+    top: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 50px;
+    background: linear-gradient(90deg, #34495e, #4a6785);
+    color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+nav .logo {
+    font-size: 1.8em;
+    font-weight: 700;
+}
+nav ul {
+    display: flex;
+    list-style: none;
+}
+nav ul li {
+    margin-left: 30px;
+}
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.1em;
+    transition: opacity 0.3s;
+}
+nav ul li a:hover {
+    opacity: 0.7;
+}
+.cart {
+    max-width: 1000px;
+    margin: 80px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+.cart h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #34495e;
+    font-size: 2em;
+}
+.cart table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+.cart table th, .cart table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+.cart table th {
+    background: #34495e;
+    color: white;
+    font-weight: 600;
+}
+.cart table tr:nth-child(even) {
+    background: #f9f9f9;
+}
+.cart p {
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 1.1em;
+}
+.btn {
+    display: inline-block;
+    padding: 12px 25px;
+    background: #34495e;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 1em;
+    transition: background 0.3s, transform 0.2s;
+}
+.btn:hover {
+    background: #2c3e50;
+    transform: scale(1.05);
+}
+.btn.remove {
+    background: #e74c3c;
+}
+.btn.remove:hover {
+    background: #c0392b;
+}
+.btn.checkout {
+    display: block;
+    width: 200px;
+    margin: 20px auto 0;
+    text-align: center;
+}
+footer {
+    text-align: center;
+    padding: 20px;
+    background: #34495e;
+    color: white;
+    font-size: 0.9em;
+}

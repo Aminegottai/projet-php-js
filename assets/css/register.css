@@ -1,0 +1,106 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+body {
+    background: #fff3e0;
+}
+nav {
+    position: sticky;
+    top: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 50px;
+    background: linear-gradient(90deg, #e67e22, #f1c40f);
+    color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+nav .logo {
+    font-size: 1.8em;
+    font-weight: 700;
+}
+nav ul {
+    display: flex;
+    list-style: none;
+}
+nav ul li {
+    margin-left: 30px;
+}
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.1em;
+    transition: opacity 0.3s;
+}
+nav ul li a:hover {
+    opacity: 0.7;
+}
+.form-container {
+    max-width: 450px;
+    margin: 80px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+.form-container h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #e67e22;
+    font-size: 1.8em;
+}
+.form-container input, .form-container select {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1em;
+}
+.form-container select {
+    appearance: none;
+    background: url('data:image/svg+xml;utf8,<svg fill="%23e67e22" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+}
+.form-container button {
+    width: 100%;
+    padding: 12px;
+    background: #e67e22;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+}
+.form-container button:hover {
+    background: #d35400;
+    transform: scale(1.05);
+}
+.error {
+    color: #e74c3c;
+    text-align: center;
+    margin-bottom: 15px;
+}
+.form-container p {
+    text-align: center;
+    margin-top: 20px;
+    color: #7f8c8d;
+}
+.form-container p a {
+    color: #e67e22;
+    text-decoration: none;
+}
+.form-container p a:hover {
+    text-decoration: underline;
+}
+footer {
+    text-align: center;
+    padding: 20px;
+    background: #e67e22;
+    color: white;
+    font-size: 0.9em;
+}
