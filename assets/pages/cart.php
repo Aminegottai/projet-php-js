@@ -1,91 +1,134 @@
 <?php
 include '../include/config.php';
-if (isset($_GET['add'])) {
-    $product_id = (int)$_GET['add'];
-    $sql = "SELECT * FROM products WHERE id = :id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute(['id' => $product_id]);
-    $product = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($product) {
-        if (!isset($_SESSION['cart'])) {
-            $_SESSION['cart'] = [];
-        }
-        $_SESSION['cart'][$product_id] = [
-            'name' => $product['name'],
-            'price' => $product['price'],
-            'quantity' => isset($_SESSION['cart'][$product_id]) ? $_SESSION['cart'][$product_id]['quantity'] + 1 : 1
-        ];
+
+// Vérifier si l'utilisateur est connecté et a le rôle 'client'
+$user_id = null;
+$debug_message = "";
+if (isset($_COOKIE['PHPSESSID'])) {
+    session_start();
+    if (isset($_SESSION['user_id']) && $_SESSION['role'] == 'client') {
+        $user_id = $_SESSION['user_id'];
+        $debug_message = "Utilisateur connecté - user_id: $user_id";
+    } else {
+        $debug_message = "Utilisateur non connecté ou non client";
+        header('Location: ../../index.php?return_to=cart');
+        exit;
+    }
+} else {
+    $debug_message = "Cookie PHPSESSID non défini";
+    header('Location: ../../index.php?return_to=cart');
+    exit;
+}
+
+// Gérer la suppression d'un produit spécifique du panier
+if (isset($_GET['action']) && $_GET['action'] == 'remove' && isset($_GET['product_id'])) {
+    $product_id_to_remove = (int)$_GET['product_id'];
+    try {
+        $sql = "DELETE FROM cart WHERE user_id = :user_id AND product_id = :product_id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['user_id' => $user_id, 'product_id' => $product_id_to_remove]);
+        header('Location: cart.php?message=Produit supprimé du panier');
+        exit;
+    } catch (PDOException $e) {
+        $error_message = "Erreur lors de la suppression du produit : " . $e->getMessage();
     }
 }
-if (isset($_GET['remove'])) {
-    $product_id = (int)$_GET['remove'];
-    if (isset($_SESSION['cart'][$product_id])) {
-        $_SESSION['cart'][$product_id]['quantity']--;
-        if ($_SESSION['cart'][$product_id]['quantity'] <= 0) {
-            unset($_SESSION['cart'][$product_id]);
-        }
+
+// Vider le panier si demandé
+if (isset($_GET['action']) && $_GET['action'] == 'clear') {
+    try {
+        $sql = "DELETE FROM cart WHERE user_id = :user_id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['user_id' => $user_id]);
+        header('Location: cart.php?message=Panier vidé');
+        exit;
+    } catch (PDOException $e) {
+        $error_message = "Erreur lors de la suppression du panier : " . $e->getMessage();
     }
+}
+
+// Récupérer les produits du panier
+$cart_items = [];
+try {
+    $sql = "SELECT c.*, p.name, p.price 
+            FROM cart c 
+            JOIN products p ON c.product_id = p.id 
+            WHERE c.user_id = :user_id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['user_id' => $user_id]);
+    $cart_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $debug_message .= " | Nombre d'articles dans le panier : " . count($cart_items);
+} catch (PDOException $e) {
+    $error_message = "Erreur lors de la récupération du panier : " . $e->getMessage();
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panier</title>
-    <link rel="stylesheet" href="../css/cart.css">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #e8f0f2; margin: 0; padding: 0; }
+        nav { background-color: #34495e; padding: 10px; color: white; }
+        nav .logo { font-size: 1.5em; }
+        nav ul { list-style: none; padding: 0; }
+        nav ul li { display: inline; margin-right: 15px; }
+        nav ul li a { color: #ecf0f1; text-decoration: none; }
+        nav ul li a:hover { color: #bdc3c7; }
+        .container { max-width: 800px; margin: 20px auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #ddd; }
+        .btn { padding: 10px 20px; background-color: #34495e; color: white; text-decoration: none; border-radius: 4px; }
+        .btn:hover { background-color: #2c3e50; }
+        .btn-danger { background-color: #e74c3c; }
+        .btn-danger:hover { background-color: #c0392b; }
+        .btn-remove { background-color: #e74c3c; padding: 5px 10px; font-size: 0.9em; }
+        .btn-remove:hover { background-color: #c0392b; }
+        .message { color: green; text-align: center; margin-bottom: 15px; }
+        .error { color: red; text-align: center; margin-bottom: 15px; }
+        .debug { color: blue; text-align: center; margin-bottom: 15px; }
+    </style>
 </head>
 <body>
     <nav>
         <div class="logo">Freelance Platform</div>
         <ul>
             <li><a href="../../index.php">Accueil</a></li>
-            <li><a href="../../index.php#products">Produits</a></li>
-            <?php if (isset($_SESSION['user_id'])): ?>
-                <li><a href="cart.php">Panier</a></li>
-                <li><a href="profile.php">Profil</a></li>
-                <li><a href="../../logout.php">Déconnexion</a></li>
-            <?php else: ?>
-                <li><a href="login.php">Connexion</a></li>
-                <li><a href="register.php">Inscription</a></li>
-            <?php endif; ?>
+            <li><a href="client-home.php#products">Produits</a></li>
+            <li><a href="cart.php">Panier</a></li>
+            <li><a href="profile.php">Profil</a></li>
+            <li><a href="../../logout.php">Déconnexion</a></li>
         </ul>
     </nav>
-    <section class="cart">
+    <section class="container">
         <h2>Votre Panier</h2>
-        <?php if (empty($_SESSION['cart'])): ?>
-            <p>Votre panier est vide.</p>
+        <p class="debug"><?php echo htmlspecialchars($debug_message); ?></p>
+        <?php if (isset($_GET['message'])): ?>
+            <p class="message"><?php echo htmlspecialchars($_GET['message']); ?></p>
+        <?php endif; ?>
+        <?php if (isset($error_message)): ?>
+            <p class="error"><?php echo htmlspecialchars($error_message); ?></p>
+        <?php endif; ?>
+        <?php if (empty($cart_items)): ?>
+            <p>Votre panier est vide. <a href="client-home.php#products">Ajouter des produits</a></p>
         <?php else: ?>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Produit</th>
-                        <th>Prix</th>
-                        <th>Quantité</th>
-                        <th>Total</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php $total = 0; ?>
-                    <?php foreach ($_SESSION['cart'] as $id => $item): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($item['name']); ?></td>
-                            <td><?php echo number_format($item['price'], 2); ?> €</td>
-                            <td><?php echo $item['quantity']; ?></td>
-                            <td><?php echo number_format($item['price'] * $item['quantity'], 2); ?> €</td>
-                            <td><a href="cart.php?remove=<?php echo $id; ?>" class="btn remove">Retirer</a></td>
-                        </tr>
-                        <?php $total += $item['price'] * $item['quantity']; ?>
-                    <?php endforeach; ?>
-                    <tr>
-                        <td colspan="3"><strong>Total</strong></td>
-                        <td><strong><?php echo number_format($total, 2); ?> €</strong></td>
-                        <td></td>
-                    </tr>
-                </tbody>
-            </table>
-            <a href="checkout.php" class="btn checkout">Payer</a>
+            <?php $total = 0; ?>
+            <?php foreach ($cart_items as $item): ?>
+                <div class="cart-item">
+                    <span><?php echo htmlspecialchars($item['name']); ?> (x<?php echo $item['quantity']; ?>)</span>
+                    <div>
+                        <span><?php echo number_format($item['price'] * $item['quantity'], 2); ?> €</span>
+                        <a href="cart.php?action=remove&product_id=<?php echo $item['product_id']; ?>" class="btn btn-remove" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce produit du panier ?');">Supprimer</a>
+                    </div>
+                </div>
+                <?php $total += $item['price'] * $item['quantity']; ?>
+            <?php endforeach; ?>
+            <div class="cart-item">
+                <strong>Total :</strong>
+                <strong><?php echo number_format($total, 2); ?> €</strong>
+            </div>
+            <a href="cart.php?action=clear" class="btn btn-danger">Vider le panier</a>
         <?php endif; ?>
     </section>
     <?php include '../include/footer.php'; ?>

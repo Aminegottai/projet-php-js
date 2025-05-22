@@ -7,8 +7,12 @@
 body {
     background: #e0f7fa;
 }
-nav {
+nav {
     position: sticky;
     top: 0;
     display: flex;
-    justify-content
+    justify-content: flex-end; /* Aligne le contenu du nav à droite */
+    background-color: #ffffff;
+    padding: 10px 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
