@@ -117,9 +117,9 @@ nav ul li a:hover {
 </head>
 <body>
     <nav>
-        <div class="logo">Freelance Platform</div>
+        <div class="logo">Freelancia  </div>
         <ul>
-            <li><a href="../../index.php">Accueil</a></li>
+            <li><a href="freelancer-home.php">Accueil</a></li>
             <li><a href="freelancer-home.php#products">Produits</a></li>
             <li><a href="add-product.php">Ajouter un produit</a></li>
             <li><a href="profile.php">Profil</a></li>

@@ -3,19 +3,15 @@ include '../include/config.php';
 
 // Vérifier si l'utilisateur est connecté et a le rôle 'client'
 $user_id = null;
-$debug_message = "";
 if (isset($_COOKIE['PHPSESSID'])) {
     session_start();
     if (isset($_SESSION['user_id']) && $_SESSION['role'] == 'client') {
         $user_id = $_SESSION['user_id'];
-        $debug_message = "Utilisateur connecté - user_id: $user_id";
     } else {
-        $debug_message = "Utilisateur non connecté ou non client";
         header('Location: ../../index.php?return_to=cart');
         exit;
     }
 } else {
-    $debug_message = "Cookie PHPSESSID non défini";
     header('Location: ../../index.php?return_to=cart');
     exit;
 }
@@ -52,14 +48,20 @@ $cart_items = [];
 try {
     $sql = "SELECT c.*, p.name, p.price 
             FROM cart c 
-            JOIN products p ON c.product_id = p.id 
+            LEFT JOIN products p ON c.product_id = p.id 
             WHERE c.user_id = :user_id";
     $stmt = $pdo->prepare($sql);
     $stmt->execute(['user_id' => $user_id]);
     $cart_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $debug_message .= " | Nombre d'articles dans le panier : " . count($cart_items);
 } catch (PDOException $e) {
     $error_message = "Erreur lors de la récupération du panier : " . $e->getMessage();
+}
+
+// Calculer les statistiques
+$total_items = 0; // Nombre total d'articles (somme des quantités)
+$unique_products = count($cart_items); // Nombre de produits différents
+foreach ($cart_items as $item) {
+    $total_items += $item['quantity'];
 }
 ?>
 
@@ -71,10 +73,10 @@ try {
     <title>Panier</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #e8f0f2; margin: 0; padding: 0; }
-        nav { background-color: #34495e; padding: 10px; color: white; }
+        nav { background-color: #34495e; padding: 10px; color: white; display: flex; justify-content: space-between; align-items: center; }
         nav .logo { font-size: 1.5em; }
-        nav ul { list-style: none; padding: 0; }
-        nav ul li { display: inline; margin-right: 15px; }
+        nav ul { list-style: none; padding: 0; margin: 0; }
+        nav ul li { display: inline; margin-left: 15px; }
         nav ul li a { color: #ecf0f1; text-decoration: none; }
         nav ul li a:hover { color: #bdc3c7; }
         .container { max-width: 800px; margin: 20px auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
@@ -87,14 +89,15 @@ try {
         .btn-remove:hover { background-color: #c0392b; }
         .message { color: green; text-align: center; margin-bottom: 15px; }
         .error { color: red; text-align: center; margin-bottom: 15px; }
-        .debug { color: blue; text-align: center; margin-bottom: 15px; }
+        .stats { background-color: #f8f9fa; padding: 10px; border-radius: 4px; margin-bottom: 20px; }
+        .stats p { margin: 5px 0; }
     </style>
 </head>
 <body>
     <nav>
         <div class="logo">Freelance Platform</div>
         <ul>
-            <li><a href="../../index.php">Accueil</a></li>
+            <li><a href="client-home.php">Accueil</a></li>
             <li><a href="client-home.php#products">Produits</a></li>
             <li><a href="cart.php">Panier</a></li>
             <li><a href="profile.php">Profil</a></li>
@@ -103,7 +106,6 @@ try {
     </nav>
     <section class="container">
         <h2>Votre Panier</h2>
-        <p class="debug"><?php echo htmlspecialchars($debug_message); ?></p>
         <?php if (isset($_GET['message'])): ?>
             <p class="message"><?php echo htmlspecialchars($_GET['message']); ?></p>
         <?php endif; ?>
@@ -113,16 +115,37 @@ try {
         <?php if (empty($cart_items)): ?>
             <p>Votre panier est vide. <a href="client-home.php#products">Ajouter des produits</a></p>
         <?php else: ?>
+            <!-- Afficher les statistiques -->
+            <div class="stats">
+                <p><strong>Nombre de produits différents :</strong> <?php echo $unique_products; ?></p>
+                <p><strong>Nombre total d'articles :</strong> <?php echo $total_items; ?></p>
+            </div>
             <?php $total = 0; ?>
             <?php foreach ($cart_items as $item): ?>
                 <div class="cart-item">
-                    <span><?php echo htmlspecialchars($item['name']); ?> (x<?php echo $item['quantity']; ?>)</span>
+                    <span>
+                        <?php 
+                        if ($item['name']) {
+                            echo htmlspecialchars($item['name']) . " (x" . $item['quantity'] . ")";
+                        } else {
+                            echo "Produit indisponible (x" . $item['quantity'] . ")";
+                        }
+                        ?>
+                    </span>
                     <div>
-                        <span><?php echo number_format($item['price'] * $item['quantity'], 2); ?> €</span>
+                        <span>
+                            <?php 
+                            if ($item['price']) {
+                                echo number_format($item['price'] * $item['quantity'], 2) . " €";
+                                $total += $item['price'] * $item['quantity'];
+                            } else {
+                                echo "Prix indisponible";
+                            }
+                            ?>
+                        </span>
                         <a href="cart.php?action=remove&product_id=<?php echo $item['product_id']; ?>" class="btn btn-remove" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce produit du panier ?');">Supprimer</a>
                     </div>
                 </div>
-                <?php $total += $item['price'] * $item['quantity']; ?>
             <?php endforeach; ?>
             <div class="cart-item">
                 <strong>Total :</strong>

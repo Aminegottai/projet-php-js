@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </head>
 <body>
     <nav>
-        <div class="logo">Freelance Platform</div>
+        <div class="logo">Freelancia  </div>
         <ul>
             <li><a href="../../index.php">Accueil</a></li>
             <li><a href="../../index.php#products">Produits</a></li>
